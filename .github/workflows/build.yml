@@ -6,6 +6,10 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+# 允许创建 Release 和上传文件
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,9 +31,9 @@ jobs:
       - name: 编译 Debug APK
         run: gradle assembleDebug
 
-      - name: 上传 APK
-        uses: actions/upload-artifact@v4
+      - name: 发布 APK 到 Releases
+        uses: softprops/action-gh-release@v2
         with:
-          name: MiMoStudio-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          files: app/build/outputs/apk/debug/*.apk
+          tag_name: v${{ github.run_number }}
+          name: MiMo Studio v${{ github.run_number }}

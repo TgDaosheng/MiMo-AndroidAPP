@@ -1,9 +1,12 @@
 package com.xiaomimimo.studio
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.net.http.SslError
+import android.os.Build
 import android.os.Bundle
 import android.os.Message
+import android.view.WindowManager
 import android.webkit.CookieManager
 import android.webkit.JsPromptResult
 import android.webkit.JsResult
@@ -17,6 +20,9 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,7 +43,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        setupFullScreen()
+
         webView = findViewById(R.id.webView)
+        applyWindowInsets()
         initWebView()
 
         if (savedInstanceState != null) {
@@ -56,6 +65,35 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    // 全面屏适配：状态栏/导航栏透明 + 刘海挖孔 + 边到边显示
+    private fun setupFullScreen() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.isAppearanceLightStatusBars = true
+        controller.isAppearanceLightNavigationBars = true
+    }
+
+    // 给 WebView 加安全区 padding，避免内容被状态栏/导航栏/刘海遮挡
+    private fun applyWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { v, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or
+                    WindowInsetsCompat.Type.displayCutout()
+            )
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
